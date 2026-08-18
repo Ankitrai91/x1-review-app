@@ -1,52 +1,80 @@
 import { useState } from "react";
 
-const GOOGLE_REVIEW_URL =
-  "https://g.page/r/CUMNW_N0qfZIEBM/review";
-
-function ReviewCard({ review }) {
-  const [copied, setCopied] = useState(false);
+function ReviewCard({
+  review,
+  businessName,
+  subtitle,
+  googleUrl,
+}) {
+  const [copied, setCopied] =
+    useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(
-      review.text
-    );
+    try {
+      await navigator.clipboard.writeText(
+        review.text
+      );
 
-    setCopied(true);
+      setCopied(true);
+    } catch (error) {
+      console.error(
+        "Copy failed:",
+        error
+      );
+    }
   };
 
   const handleContinue = () => {
-    window.location.href =
-      GOOGLE_REVIEW_URL;
+    window.location.href = googleUrl;
   };
 
   return (
-    <div className="card">
-      <h1>X1 Fitness</h1>
+    <main className="page">
+      <div className="card">
 
-      <p className="subtitle">
-        Copy this review and paste it on Google.
-      </p>
+        <div className="brand">
+          <h1>{businessName}</h1>
+        </div>
 
-      <div className="review-box">
-        {review.text}
+        <div className="stars">
+          ★★★★★
+        </div>
+
+        <h2>
+          We'd love your review
+        </h2>
+
+        <p className="subtitle">
+          {subtitle}
+        </p>
+
+        <div className="review-box">
+          <p>{review.text}</p>
+        </div>
+
+        <button
+          className="copy-btn"
+          onClick={handleCopy}
+        >
+          {copied
+            ? "✓ Review Copied"
+            : "Copy Review"}
+        </button>
+
+        <button
+          className="continue-btn"
+          onClick={handleContinue}
+        >
+          Continue to Google
+        </button>
+
+        <p className="small-text">
+          Copy the review first, then paste it
+          on Google.
+        </p>
+
       </div>
-
-      <button
-        className="copy-btn"
-        onClick={handleCopy}
-      >
-        {copied
-          ? "Review Copied ✓"
-          : "Copy Review"}
-      </button>
-
-      <button
-        className="continue-btn"
-        onClick={handleContinue}
-      >
-        Continue To Google Review
-      </button>
-    </div>
+    </main>
   );
 }
 

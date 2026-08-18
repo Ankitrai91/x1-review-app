@@ -4,17 +4,24 @@ import {
   where,
   limit,
   getDocs,
-  updateDoc,
-  doc
+  doc,
+  runTransaction,
 } from "firebase/firestore";
 
-import { db } from "../src/firebase";
+import { db } from "../firebase";
 
-export const getUniqueReview = async () => {
+export const getUniqueReview = async (
+  collectionName
+) => {
+  const reviewsRef = collection(
+    db,
+    collectionName
+  );
+
   const q = query(
-    collection(db, "reviews"),
+    reviewsRef,
     where("used", "==", false),
-    limit(1)
+    limit(10)
   );
 
   const snapshot = await getDocs(q);
@@ -23,17 +30,55 @@ export const getUniqueReview = async () => {
     return null;
   }
 
-  const reviewDoc = snapshot.docs[0];
+  for (const reviewSnapshot of snapshot.docs) {
+    const reviewRef = doc(
+      db,
+      collectionName,
+      reviewSnapshot.id
+    );
 
-  await updateDoc(
-    doc(db, "reviews", reviewDoc.id),
-    {
-      used: true
+    try {
+      const result = await runTransaction(
+        db,
+        async (transaction) => {
+          const freshSnapshot =
+            await transaction.get(reviewRef);
+
+          if (!freshSnapshot.exists()) {
+            return null;
+          }
+
+          const data =
+            freshSnapshot.data();
+
+          if (data.used === true) {
+            return null;
+          }
+
+          transaction.update(
+            reviewRef,
+            {
+              used: true,
+            }
+          );
+
+          return {
+            id: freshSnapshot.id,
+            ...data,
+          };
+        }
+      );
+
+      if (result) {
+        return result;
+      }
+    } catch (error) {
+      console.error(
+        "Review assignment failed:",
+        error
+      );
     }
-  );
+  }
 
-  return {
-    id: reviewDoc.id,
-    ...reviewDoc.data()
-  };
+  return null;
 };
