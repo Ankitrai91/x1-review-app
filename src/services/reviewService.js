@@ -8,7 +8,7 @@ import {
   runTransaction,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db } from "../src/firebase";
 
 export const getUniqueReview = async (
   collectionName
