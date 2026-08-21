@@ -1,19 +1,34 @@
 import { useState } from "react";
+import { markReviewAsUsed } from "../services/reviewService";
 
 function ReviewCard({
   review,
-  businessName,
-  subtitle,
-  googleUrl,
+  businessConfig,
 }) {
   const [copied, setCopied] =
     useState(false);
+
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(
         review.text
       );
+
+        const markedAsUsed =
+        await markReviewAsUsed(
+          businessConfig.collectionName,
+          review.id
+        );
+
+      if (!markedAsUsed) {
+        setError(
+          "This review is no longer available. Please try again."
+        );
+
+        return;
+      }
+
 
       setCopied(true);
     } catch (error) {
@@ -25,7 +40,7 @@ function ReviewCard({
   };
 
   const handleContinue = () => {
-    window.location.href = googleUrl;
+    window.location.href = businessConfig.googleReviewUrl;
   };
 
   return (
@@ -33,7 +48,7 @@ function ReviewCard({
       <div className="card">
 
         <div className="brand">
-          <h1>{businessName}</h1>
+          <h1>{businessConfig.businessName}</h1>
         </div>
 
         <div className="stars">
@@ -45,7 +60,7 @@ function ReviewCard({
         </h2>
 
         <p className="subtitle">
-          {subtitle}
+          {businessConfig.subtitle}
         </p>
 
         <div className="review-box">

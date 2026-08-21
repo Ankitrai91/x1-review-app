@@ -55,16 +55,19 @@ export const getUniqueReview = async (
             return null;
           }
 
-          transaction.update(
-            reviewRef,
-            {
-              used: true,
-            }
-          );
+          // transaction.update(
+          //   reviewRef,
+          //   {
+          //     used: true,
+          //   }
+          // );
+
+           const reviewSnapshot = snapshot.docs[0];
+
 
           return {
             id: freshSnapshot.id,
-            ...data,
+            ...reviewSnapshot.data(),
           };
         }
       );
@@ -81,4 +84,50 @@ export const getUniqueReview = async (
   }
 
   return null;
+};
+
+export const markReviewAsUsed = async (
+  collectionName,
+  reviewId
+) => {
+  const reviewRef = doc(
+    db,
+    collectionName,
+    reviewId
+  );
+
+  try {
+    const result = await runTransaction(
+      db,
+      async (transaction) => {
+        const reviewSnapshot =
+          await transaction.get(reviewRef);
+
+        if (!reviewSnapshot.exists()) {
+          return false;
+        }
+
+        const data = reviewSnapshot.data();
+
+        // Someone else already used it
+        if (data.used === true) {
+          return false;
+        }
+
+        transaction.update(reviewRef, {
+          used: true,
+        });
+
+        return true;
+      }
+    );
+
+    return result;
+  } catch (error) {
+    console.error(
+      "Failed to mark review as used:",
+      error
+    );
+    return false;
+  }
 };
